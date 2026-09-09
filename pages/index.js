@@ -48,7 +48,7 @@ export default function Home() {
           </div>
           <div>
             <p style={{ fontSize: '12px', color: '#7f8c8d' }}>TOTAL REGISTROS</p>
-            <h3 style={{ margin: 0, color: '#e74c3c' }}>{data.reduce((sum, d) => sum + d.registros, 0)}</h3>
+            <h3 style={{ margin: 0, color: '#e74c3c' }}>{data.reduce((sum, d) => sum + parseInt(d.registros), 0)}</h3>
           </div>
         </div>
       </div>
@@ -79,6 +79,7 @@ export default function Home() {
                   <th style={{ padding: '12px', textAlign: 'right' }}>Total Ventas</th>
                   <th style={{ padding: '12px', textAlign: 'right' }}>Unidades</th>
                   <th style={{ padding: '12px', textAlign: 'right' }}>Registros</th>
+                  <th style={{ padding: '12px', textAlign: 'left' }}>Producto Top</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +92,7 @@ export default function Home() {
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>{row.total_unidades}</td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>{row.registros}</td>
+                    <td style={{ padding: '12px', color: '#e67e22', fontWeight: 'bold' }}>{row.producto_top}</td>
                   </tr>
                 ))}
               </tbody>
