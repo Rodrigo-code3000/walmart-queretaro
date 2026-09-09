@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     
     await client.connect();
     
-    // Traer CP con resumen
+    // Resumen por CP
     const resumenResult = await client.query(`
       SELECT 
         t.codigo_postal,
@@ -23,35 +23,36 @@ export default async function handler(req, res) {
       ORDER BY total_ventas DESC
     `);
     
-    // Traer TOP 5 productos por CP
+    // Top 5 productos (simple, sin ROW_NUMBER)
     const productosResult = await client.query(`
       SELECT 
         t.codigo_postal,
         p.item_desc,
         SUM(v.pos_qty)::int as cantidad,
-        SUM(v.pos_sales)::float as ventas,
-        ROW_NUMBER() OVER (PARTITION BY t.codigo_postal ORDER BY SUM(v.pos_qty) DESC) as ranking
+        SUM(v.pos_sales)::float as ventas
       FROM ventas v
       JOIN productos p ON v.product_id = p.product_id
       JOIN tiendas t ON v.store_id = t.store_id
       GROUP BY t.codigo_postal, p.item_desc
-      HAVING ROW_NUMBER() OVER (PARTITION BY t.codigo_postal ORDER BY SUM(v.pos_qty) DESC) <= 5
+      ORDER BY t.codigo_postal, SUM(v.pos_qty) DESC
     `);
     
     await client.end();
     
-    // Agrupar productos por CP
+    // Agrupar TOP 5 por CP
     const productosPorCP = {};
     productosResult.rows.forEach(row => {
       if (!productosPorCP[row.codigo_postal]) {
         productosPorCP[row.codigo_postal] = [];
       }
-      productosPorCP[row.codigo_postal].push({
-        ranking: row.ranking,
-        item_desc: row.item_desc,
-        cantidad: row.cantidad,
-        ventas: row.ventas
-      });
+      if (productosPorCP[row.codigo_postal].length < 5) {
+        productosPorCP[row.codigo_postal].push({
+          ranking: productosPorCP[row.codigo_postal].length + 1,
+          item_desc: row.item_desc,
+          cantidad: row.cantidad,
+          ventas: row.ventas
+        });
+      }
     });
     
     // Combinar
@@ -62,6 +63,7 @@ export default async function handler(req, res) {
     
     res.status(200).json({ status: "ok", data: data });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ status: "error", message: error.message });
   }
 }
