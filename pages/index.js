@@ -26,9 +26,10 @@ export default function Home() {
       });
   }, []);
 
-  const dataFiltrada = data.filter(d => 
-    d.codigo_postal.includes(filtro) || d.municipio.toLowerCase().includes(filtro.toLowerCase())
-  );
+ const dataFiltrada = data.filter(d => 
+  (d.codigo_postal && d.codigo_postal.includes(filtro)) || 
+  (d.municipio && d.municipio.toLowerCase().includes(filtro.toLowerCase()))
+);
 
   return (
     <div style={{ padding: '30px', fontFamily: 'Arial', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>

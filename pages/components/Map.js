@@ -6,7 +6,6 @@ export default function MapComponent({ data }) {
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
-    // ¡¡AQUÍ!! Importa Leaflet SOLO en el cliente
     const L = require('leaflet');
     require('leaflet/dist/leaflet.css');
 
@@ -46,6 +45,30 @@ export default function MapComponent({ data }) {
       const color = `hsl(${hue}, 100%, 50%)`;
       const radius = 8 + intensity * 25;
 
+      // Generar popup con TOP 5
+      const topProductosHTML = item.top_productos
+        .slice(0, 5)
+        .map((prod, i) => `
+          <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
+            <strong>#${prod.ranking}</strong> ${prod.item_desc}
+            <br/><small>📦 ${prod.cantidad} unidades | $${parseFloat(prod.ventas).toFixed(2)}</small>
+          </div>
+        `)
+        .join('');
+
+      const popupContent = `
+        <div style="font-family: Arial; font-size: 12px; width: 300px;">
+          <h3 style="margin: 0 0 10px 0; color: #2c3e50;">${item.municipio}</h3>
+          <strong>CP: ${item.codigo_postal}</strong><br/>
+          💰 Ventas: <strong>$${ventas.toFixed(2)}</strong><br/>
+          📦 Unidades: ${item.total_unidades}<br/>
+          📊 Registros: ${item.registros}<br/>
+          <hr style="margin: 10px 0;"/>
+          <strong>🏆 TOP 5 PRODUCTOS:</strong>
+          ${topProductosHTML}
+        </div>
+      `;
+
       L.circleMarker(coords, {
         radius: radius,
         fillColor: color,
@@ -54,15 +77,7 @@ export default function MapComponent({ data }) {
         opacity: 1,
         fillOpacity: 0.8,
       })
-        .bindPopup(`
-          <div style="font-family: Arial; font-size: 12px;">
-            <b>${item.municipio}</b><br/>
-            <strong>CP: ${item.codigo_postal}</strong><br/>
-            💰 Ventas: <strong>$${ventas.toFixed(2)}</strong><br/>
-            📦 Unidades: ${item.total_unidades}<br/>
-            📊 Registros: ${item.registros}
-          </div>
-        `)
+        .bindPopup(popupContent)
         .addTo(map);
     });
   }, [data]);
