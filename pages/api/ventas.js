@@ -5,10 +5,10 @@ export default async function handler(req, res) {
     // DATABASE_URL codificada correctamente
     const connectionString = process.env.DATABASE_URL;
     
-    const client = new Client({
-      connectionString: connectionString,
-      ssl: { rejectUnauthorized: false }
-    });
+   const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
     
     await client.connect();
     
