@@ -1,6 +1,4 @@
 import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 export default function MapComponent({ data }) {
   const mapRef = useRef(null);
@@ -8,13 +6,16 @@ export default function MapComponent({ data }) {
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
+    // ¡¡AQUÍ!! Importa Leaflet SOLO en el cliente
+    const L = require('leaflet');
+    require('leaflet/dist/leaflet.css');
+
     const map = L.map(mapRef.current).setView([20.59, -100.39], 9);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Coordenadas aproximadas por CP
     const coordsMap = {
       '76116': [20.58, -100.41],
       '76130': [20.60, -100.40],
@@ -41,7 +42,7 @@ export default function MapComponent({ data }) {
       const ventas = parseFloat(item.total_ventas);
       const intensity = Math.min(ventas / maxVentas, 1);
       
-      const hue = intensity * 120; // Verde = alto, Rojo = bajo
+      const hue = intensity * 120;
       const color = `hsl(${hue}, 100%, 50%)`;
       const radius = 8 + intensity * 25;
 
