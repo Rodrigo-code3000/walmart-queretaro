@@ -9,31 +9,33 @@ export default async function handler(req, res) {
     
     await client.connect();
     
-    // Resumen por CP
+    // Resumen por CP (AGREGAR t.estado)
     const resumenResult = await client.query(`
       SELECT 
         t.codigo_postal,
         t.municipio,
+        t.estado,
         SUM(v.pos_qty)::int as total_unidades,
         SUM(v.pos_sales)::float as total_ventas,
         COUNT(*)::int as registros
       FROM ventas v
       JOIN tiendas t ON v.store_id = t.store_id
-      GROUP BY t.codigo_postal, t.municipio
+      GROUP BY t.codigo_postal, t.municipio, t.estado
       ORDER BY total_ventas DESC
     `);
     
-    // Top 5 productos (simple, sin ROW_NUMBER)
+    // Top 5 productos (también agregar estado)
     const productosResult = await client.query(`
       SELECT 
         t.codigo_postal,
+        t.estado,
         p.item_desc,
         SUM(v.pos_qty)::int as cantidad,
         SUM(v.pos_sales)::float as ventas
       FROM ventas v
       JOIN productos p ON v.product_id = p.product_id
       JOIN tiendas t ON v.store_id = t.store_id
-      GROUP BY t.codigo_postal, p.item_desc
+      GROUP BY t.codigo_postal, t.estado, p.item_desc
       ORDER BY t.codigo_postal, SUM(v.pos_qty) DESC
     `);
     
@@ -42,12 +44,13 @@ export default async function handler(req, res) {
     // Agrupar TOP 5 por CP
     const productosPorCP = {};
     productosResult.rows.forEach(row => {
-      if (!productosPorCP[row.codigo_postal]) {
-        productosPorCP[row.codigo_postal] = [];
+      const key = row.codigo_postal;
+      if (!productosPorCP[key]) {
+        productosPorCP[key] = [];
       }
-      if (productosPorCP[row.codigo_postal].length < 5) {
-        productosPorCP[row.codigo_postal].push({
-          ranking: productosPorCP[row.codigo_postal].length + 1,
+      if (productosPorCP[key].length < 5) {
+        productosPorCP[key].push({
+          ranking: productosPorCP[key].length + 1,
           item_desc: row.item_desc,
           cantidad: row.cantidad,
           ventas: row.ventas
