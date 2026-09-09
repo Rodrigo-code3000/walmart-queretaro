@@ -2,18 +2,26 @@ import { useEffect, useRef } from 'react';
 
 export default function MapComponent({ data }) {
   const mapRef = useRef(null);
+  const mapInstance = useRef(null);
 
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
+    // ¡¡¡LIMPIAR EL MAPA ANTERIOR!!!
+    if (mapInstance.current) {
+      mapInstance.current.remove();
+      mapInstance.current = null;
+    }
+
     const L = require('leaflet');
     require('leaflet/dist/leaflet.css');
 
-    const map = L.map(mapRef.current).setView([20.59, -100.39], 9);
+    // Crear NUEVO mapa
+    mapInstance.current = L.map(mapRef.current).setView([20.59, -100.39], 9);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
-    }).addTo(map);
+    }).addTo(mapInstance.current);
 
     const coordsMap = {
       '76116': [20.58, -100.41],
@@ -45,7 +53,6 @@ export default function MapComponent({ data }) {
       const color = `hsl(${hue}, 100%, 50%)`;
       const radius = 8 + intensity * 25;
 
-      // Generar popup con TOP 5
       const topProductosHTML = item.top_productos
         .slice(0, 5)
         .map((prod, i) => `
@@ -78,8 +85,16 @@ export default function MapComponent({ data }) {
         fillOpacity: 0.8,
       })
         .bindPopup(popupContent)
-        .addTo(map);
+        .addTo(mapInstance.current);
     });
+
+    // Limpiar al desmontar
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
   }, [data]);
 
   return <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '5px' }} />;
