@@ -26,10 +26,15 @@ export default function Home() {
       });
   }, []);
 
- const dataFiltrada = data.filter(d => 
-  (d.codigo_postal && d.codigo_postal.includes(filtro)) || 
-  (d.municipio && d.municipio.toLowerCase().includes(filtro.toLowerCase()))
-);
+  // Buscador ROBUSTO
+  const dataFiltrada = filtro.trim() === '' 
+    ? data 
+    : data.filter(d => {
+        const cp = String(d.codigo_postal || '').toLowerCase();
+        const municipio = String(d.municipio || '').toLowerCase();
+        const busqueda = filtro.toLowerCase();
+        return cp.includes(busqueda) || municipio.includes(busqueda);
+      });
 
   return (
     <div style={{ padding: '30px', fontFamily: 'Arial', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -39,14 +44,14 @@ export default function Home() {
       <div style={{ marginBottom: '20px' }}>
         <input
           type="text"
-          placeholder="Buscar por código postal o municipio..."
+          placeholder="🔍 Buscar por código postal o municipio..."
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           style={{
             width: '100%',
             padding: '12px',
             fontSize: '14px',
-            border: '1px solid #ddd',
+            border: '2px solid #3498db',
             borderRadius: '5px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           }}
@@ -73,7 +78,7 @@ export default function Home() {
           </div>
           <div>
             <p style={{ fontSize: '12px', color: '#7f8c8d' }}>TOTAL REGISTROS</p>
-            <h3 style={{ margin: 0, color: '#e74c3c' }}>{dataFiltrada.reduce((sum, d) => sum + parseInt(d.registros), 0)}</h3>
+            <h3 style={{ margin: 0, color: '#e74c3c' }}>{dataFiltrada.reduce((sum, d) => sum + parseInt(d.registros || 0), 0)}</h3>
           </div>
         </div>
       </div>
@@ -96,56 +101,62 @@ export default function Home() {
 
           {/* TABLA CON TOP 5 PRODUCTOS */}
           <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            {dataFiltrada.map((cp, idx) => (
-              <div key={idx} style={{ borderBottom: '2px solid #ecf0f1', padding: '20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                  <div>
-                    <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>CÓDIGO POSTAL</p>
-                    <h3 style={{ margin: '5px 0 0 0', color: '#2c3e50' }}>{cp.codigo_postal}</h3>
+            {dataFiltrada.length === 0 ? (
+              <p style={{ padding: '20px', textAlign: 'center', color: '#7f8c8d' }}>
+                No hay resultados para "{filtro}"
+              </p>
+            ) : (
+              dataFiltrada.map((cp, idx) => (
+                <div key={idx} style={{ borderBottom: '2px solid #ecf0f1', padding: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>CÓDIGO POSTAL</p>
+                      <h3 style={{ margin: '5px 0 0 0', color: '#2c3e50' }}>{cp.codigo_postal}</h3>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>MUNICIPIO</p>
+                      <h3 style={{ margin: '5px 0 0 0', color: '#2c3e50' }}>{cp.municipio}</h3>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>TOTAL VENTAS</p>
+                      <h3 style={{ margin: '5px 0 0 0', color: '#27ae60' }}>${parseFloat(cp.total_ventas).toFixed(2)}</h3>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>REGISTROS</p>
+                      <h3 style={{ margin: '5px 0 0 0', color: '#e74c3c' }}>{cp.registros}</h3>
+                    </div>
                   </div>
-                  <div>
-                    <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>MUNICIPIO</p>
-                    <h3 style={{ margin: '5px 0 0 0', color: '#2c3e50' }}>{cp.municipio}</h3>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>TOTAL VENTAS</p>
-                    <h3 style={{ margin: '5px 0 0 0', color: '#27ae60' }}>${parseFloat(cp.total_ventas).toFixed(2)}</h3>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0 }}>REGISTROS</p>
-                    <h3 style={{ margin: '5px 0 0 0', color: '#e74c3c' }}>{cp.registros}</h3>
-                  </div>
-                </div>
 
-                {/* TOP 5 PRODUCTOS */}
-                <div>
-                  <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e', margin: '10px 0 10px 0' }}>🏆 TOP 5 PRODUCTOS:</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-                    {cp.top_productos.map((prod, i) => (
-                      <div key={i} style={{
-                        backgroundColor: '#f8f9fa',
-                        padding: '10px',
-                        borderRadius: '5px',
-                        border: '1px solid #ecf0f1'
-                      }}>
-                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#e74c3c', marginBottom: '5px' }}>
-                          #{prod.ranking}
+                  {/* TOP 5 PRODUCTOS */}
+                  <div>
+                    <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e', margin: '10px 0 10px 0' }}>🏆 TOP 5 PRODUCTOS:</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+                      {cp.top_productos.map((prod, i) => (
+                        <div key={i} style={{
+                          backgroundColor: '#f8f9fa',
+                          padding: '10px',
+                          borderRadius: '5px',
+                          border: '1px solid #ecf0f1'
+                        }}>
+                          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#e74c3c', marginBottom: '5px' }}>
+                            #{prod.ranking}
+                          </div>
+                          <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '5px' }}>
+                            {prod.item_desc.substring(0, 30)}...
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#7f8c8d' }}>
+                            📦 {prod.cantidad} unidades
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#27ae60', fontWeight: 'bold' }}>
+                            ${parseFloat(prod.ventas).toFixed(2)}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '5px' }}>
-                          {prod.item_desc.substring(0, 30)}...
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#7f8c8d' }}>
-                          📦 {prod.cantidad} unidades
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#27ae60', fontWeight: 'bold' }}>
-                          ${parseFloat(prod.ventas).toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </>
       )}
