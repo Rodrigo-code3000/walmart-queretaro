@@ -1,39 +1,35 @@
 export default async function handler(req, res) {
   try {
-    const { Client } = require('pg');
-    
-    // DATABASE_URL codificada correctamente
-    const connectionString = process.env.DATABASE_URL;
-    
-   const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-    
-    await client.connect();
-    
-    const result = await client.query(`
-      SELECT 
-        codigo_postal,
-        municipio,
-        SUM(pos_qty)::int as total_unidades,
-        SUM(pos_sales)::float as total_ventas,
-        COUNT(*) as registros
-      FROM ventas v
-      JOIN tiendas t ON v.store_id = t.id
-      GROUP BY codigo_postal, municipio
-      ORDER BY total_ventas DESC
-    `);
-    
-    await client.end();
-    
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/vw_ventas_por_cp`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          'Accept': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Supabase error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
     res.status(200).json({
       status: "ok",
-      data: result.rows,
-      count: result.rows.length
+      data: data,
+      count: data.length
     });
   } catch (error) {
-    console.error('DB Error:', error);
+    console.error('API Error:', error);
     res.status(500).json({ 
       status: "error", 
       message: error.message 
