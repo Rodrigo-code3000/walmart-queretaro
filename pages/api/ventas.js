@@ -1,7 +1,14 @@
 export default async function handler(req, res) {
   try {
     const { Client } = require('pg');
-    const client = new Client(process.env.DATABASE_URL);
+    
+    // DATABASE_URL codificada correctamente
+    const connectionString = process.env.DATABASE_URL;
+    
+    const client = new Client({
+      connectionString: connectionString,
+      ssl: { rejectUnauthorized: false }
+    });
     
     await client.connect();
     
@@ -9,7 +16,8 @@ export default async function handler(req, res) {
       SELECT 
         codigo_postal,
         municipio,
-        SUM(pos_sales)::numeric as total_ventas,
+        SUM(pos_qty)::int as total_unidades,
+        SUM(pos_sales)::float as total_ventas,
         COUNT(*) as registros
       FROM ventas v
       JOIN tiendas t ON v.store_id = t.id
@@ -25,6 +33,7 @@ export default async function handler(req, res) {
       count: result.rows.length
     });
   } catch (error) {
+    console.error('DB Error:', error);
     res.status(500).json({ 
       status: "error", 
       message: error.message 
