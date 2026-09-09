@@ -1,7 +1,14 @@
 export default async function handler(req, res) {
   try {
     const { Client } = require('pg');
-    const client = new Client(process.env.DATABASE_URL);
+    
+    // Configuración corregida con SSL obligatorio para Supabase
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false 
+      }
+    });
     
     await client.connect();
     
