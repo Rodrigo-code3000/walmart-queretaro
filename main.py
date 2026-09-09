@@ -1,335 +1,190 @@
-"""
-🏗️ WALMART QUERÉTARO - Backend API
-FastAPI + PostgreSQL + PostGIS
-Listo para Railway.app
-"""
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
 import os
-import json
-from typing import List, Optional
+from dotenv import load_dotenv
+import logging
 
-# ========== CONFIGURACIÓN ==========
+# Configuración
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title="Walmart Querétaro API",
-    description="API geoespacial para análisis de ventas",
-    version="1.0.0"
-)
+# FastAPI app
+app = FastAPI(title="Walmart Querétaro", version="1.0.0")
 
-# CORS - Permitir que React acceda desde Vercel
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar dominio: ["https://tu-dominio.vercel.app"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Conexión a PostgreSQL (Supabase)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/walmart")
-print(f"📊 Conectando a: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'local'}")
+# BD
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL no está configurada")
 
-try:
-    engine = create_engine(DATABASE_URL)
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    print("✅ Conexión a BD exitosa")
-except Exception as e:
-    print(f"⚠️  Error de conexión: {e}")
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine)
 
-# ========== HEALTH CHECK ==========
-
+# Root
 @app.get("/")
-async def root():
-    """Endpoint raíz"""
+def read_root():
     return {
         "status": "ok",
         "message": "API Walmart Querétaro activa",
         "version": "1.0.0"
     }
 
-@app.get("/health")
-async def health():
-    """Health check para Railway"""
+# Ventas por código postal
+@app.get("/venta/por-cp")
+def ventas_por_cp():
     try:
         with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected"}
-    except:
-        return {"status": "unhealthy", "database": "disconnected"}
-
-# ========== MUNICIPIOS ==========
-
-@app.get("/api/municipios")
-async def get_municipios():
-    """
-    Retorna todos los municipios con sus ventas totales
-    
-    Response:
-    [
-        {
-            "id": 1,
-            "nombre": "Querétaro",
-            "municipio": "querétaro",
-            "geometry": {...},
-            "ventas_total": 4300000,
-            "num_tiendas": 1,
-            "ticket_promedio": 301
-        },
-        ...
-    ]
-    """
-    query = """
-    SELECT 
-        m.id,
-        m.nombre,
-        m.municipio,
-        ST_AsGeoJSON(m.geometry) as geometry,
-        COALESCE(SUM(v.monto), 0)::bigint as ventas_total,
-        COALESCE(COUNT(DISTINCT v.tienda_id), 0)::int as num_tiendas,
-        COALESCE(AVG(v.monto), 0)::int as ticket_promedio
-    FROM municipios m
-    LEFT JOIN tiendas t ON t.municipio = m.municipio
-    LEFT JOIN ventas v ON v.tienda_id = t.id
-    GROUP BY m.id, m.nombre, m.municipio, m.geometry
-    ORDER BY ventas_total DESC
-    """
-    
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text(query))
-            municipios = []
-            for row in result:
-                municipios.append({
-                    "id": row[0],
-                    "nombre": row[1],
-                    "municipio": row[2],
-                    "geometry": json.loads(row[3]) if row[3] else None,
-                    "ventas_total": row[4],
-                    "num_tiendas": row[5],
-                    "ticket_promedio": row[6]
-                })
-            return municipios
-    except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/municipios/{municipio_name}")
-async def get_municipio_detail(municipio_name: str):
-    """
-    Detalles específicos de un municipio
-    """
-    query = f"""
-    SELECT 
-        m.id,
-        m.nombre,
-        m.municipio,
-        ST_AsGeoJSON(m.geometry) as geometry,
-        COALESCE(SUM(v.monto), 0)::bigint as ventas_total,
-        COUNT(DISTINCT v.tienda_id)::int as num_tiendas
-    FROM municipios m
-    LEFT JOIN tiendas t ON t.municipio = m.municipio
-    LEFT JOIN ventas v ON v.tienda_id = t.id
-    WHERE LOWER(m.municipio) = LOWER('{municipio_name}')
-    GROUP BY m.id, m.nombre, m.municipio, m.geometry
-    """
-    
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text(query))
-            row = result.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail="Municipio no encontrado")
-            
+            result = conn.execute(text("""
+                SELECT 
+                    codigo_postal,
+                    SUM(pos_qty)::int as total_unidades,
+                    SUM(pos_sales)::numeric as total_ventas,
+                    COUNT(*) as num_registros
+                FROM ventas v
+                JOIN tiendas t ON v.store_id = t.id
+                GROUP BY codigo_postal
+                ORDER BY total_ventas DESC
+            """))
+            data = [dict(row._mapping) for row in result]
             return {
-                "id": row[0],
-                "nombre": row[1],
-                "municipio": row[2],
-                "geometry": json.loads(row[3]) if row[3] else None,
-                "ventas_total": row[4],
-                "num_tiendas": row[5]
+                "status": "ok",
+                "data": data,
+                "count": len(data)
             }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-# ========== VENTAS ==========
-
-@app.get("/api/ventas/municipio/{municipio_name}")
-async def get_ventas_por_municipio(municipio_name: str):
-    """
-    Detalles de ventas por municipio
-    Agrupa por producto
-    """
-    query = f"""
-    SELECT 
-        t.nombre as tienda,
-        v.producto,
-        COALESCE(SUM(v.monto), 0)::bigint as total_ventas,
-        COALESCE(SUM(v.cantidad), 0)::int as total_cantidad,
-        COUNT(*)::int as num_transacciones
-    FROM ventas v
-    JOIN tiendas t ON v.tienda_id = t.id
-    WHERE LOWER(t.municipio) = LOWER('{municipio_name}')
-    GROUP BY t.nombre, v.producto
-    ORDER BY total_ventas DESC
-    """
-    
+# Dashboard summary
+@app.get("/dashboard/summary")
+def dashboard_summary():
     try:
         with engine.connect() as conn:
-            result = conn.execute(text(query))
-            ventas = []
-            for row in result:
-                ventas.append({
-                    "tienda": row[0],
-                    "producto": row[1],
-                    "total_ventas": row[2],
-                    "total_cantidad": row[3],
-                    "transacciones": row[4]
-                })
-            return ventas
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/tiendas")
-async def get_tiendas():
-    """
-    Retorna todas las tiendas con sus coordinadas
-    """
-    query = """
-    SELECT 
-        id,
-        nombre,
-        dirección,
-        municipio,
-        ST_X(geometry)::float as lng,
-        ST_Y(geometry)::float as lat
-    FROM tiendas
-    ORDER BY nombre
-    """
-    
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text(query))
-            tiendas = []
-            for row in result:
-                tiendas.append({
-                    "id": row[0],
-                    "nombre": row[1],
-                    "dirección": row[2],
-                    "municipio": row[3],
-                    "lng": row[4],
-                    "lat": row[5]
-                })
-            return tiendas
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ========== ESTADÍSTICAS ==========
-
-@app.get("/api/stats")
-async def get_stats():
-    """
-    Estadísticas globales de Querétaro
-    """
-    query = """
-    SELECT 
-        COALESCE(SUM(v.monto), 0)::bigint as ventas_totales,
-        COALESCE(COUNT(DISTINCT v.tienda_id), 0)::int as num_tiendas,
-        COALESCE(COUNT(DISTINCT LOWER(t.municipio)), 0)::int as num_municipios,
-        COALESCE(SUM(v.cantidad), 0)::int as total_unidades,
-        COALESCE(AVG(v.monto), 0)::int as ticket_promedio
-    FROM ventas v
-    LEFT JOIN tiendas t ON v.tienda_id = t.id
-    """
-    
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text(query))
+            result = conn.execute(text("""
+                SELECT 
+                    COUNT(DISTINCT store_id) as num_tiendas,
+                    COUNT(*) as num_registros,
+                    SUM(pos_qty)::int as total_unidades,
+                    SUM(pos_sales)::numeric as total_ventas,
+                    ROUND(SUM(pos_sales) / NULLIF(SUM(pos_qty), 0), 2)::numeric as ticket_promedio,
+                    COUNT(DISTINCT fecha) as dias_datos
+                FROM ventas
+            """))
             row = result.fetchone()
-            
+            data = dict(row._mapping) if row else {}
             return {
-                "ventas_totales": row[0],
-                "num_tiendas": row[1],
-                "num_municipios": row[2],
-                "total_unidades": row[3],
-                "ticket_promedio": row[4]
+                "status": "ok",
+                "data": data
             }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-@app.get("/api/top-productos")
-async def get_top_productos(limit: int = 5):
-    """
-    Top N productos más vendidos globalmente
-    """
-    query = f"""
-    SELECT 
-        v.producto,
-        COALESCE(SUM(v.monto), 0)::bigint as total_ventas,
-        COALESCE(SUM(v.cantidad), 0)::int as total_cantidad,
-        COUNT(DISTINCT v.tienda_id)::int as num_tiendas
-    FROM ventas v
-    GROUP BY v.producto
-    ORDER BY total_ventas DESC
-    LIMIT {limit}
-    """
-    
+# Tiendas
+@app.get("/tiendas")
+def get_tiendas():
     try:
         with engine.connect() as conn:
-            result = conn.execute(text(query))
-            productos = []
-            for row in result:
-                productos.append({
-                    "producto": row[0],
-                    "total_ventas": row[1],
-                    "total_cantidad": row[2],
-                    "num_tiendas": row[3]
-                })
-            return productos
+            result = conn.execute(text("""
+                SELECT id, store_nbr, store_name, formato, municipio, codigo_postal
+                FROM tiendas
+                ORDER BY store_name
+            """))
+            data = [dict(row._mapping) for row in result]
+            return {
+                "status": "ok",
+                "data": data,
+                "count": len(data)
+            }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-# ========== IMPORTAR DATOS ==========
-
-@app.post("/api/import-csv")
-async def import_csv_data(file_content: dict):
-    """
-    Endpoint para importar datos desde CSV
-    
-    Body esperado:
-    {
-        "tipo": "tiendas" | "ventas",
-        "datos": [...]
-    }
-    """
+# Productos
+@app.get("/productos")
+def get_productos():
     try:
-        if file_content["tipo"] == "tiendas":
-            # INSERT tiendas
-            pass
-        elif file_content["tipo"] == "ventas":
-            # INSERT ventas
-            pass
-        
-        return {"status": "ok", "message": "Datos importados"}
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT id, item_nbr, item_desc, dept_desc, unit_cost, unit_retail
+                FROM productos
+                ORDER BY item_desc
+                LIMIT 50
+            """))
+            data = [dict(row._mapping) for row in result]
+            return {
+                "status": "ok",
+                "data": data,
+                "count": len(data)
+            }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
-# ========== MAIN ==========
+# Top productos
+@app.get("/top-productos")
+def top_productos():
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT 
+                    p.item_desc,
+                    SUM(v.pos_qty)::int as total_cantidad,
+                    SUM(v.pos_sales)::numeric as total_ventas
+                FROM ventas v
+                JOIN productos p ON v.product_id = p.id
+                GROUP BY p.item_desc
+                ORDER BY total_ventas DESC
+                LIMIT 20
+            """))
+            data = [dict(row._mapping) for row in result]
+            return {
+                "status": "ok",
+                "data": data,
+                "count": len(data)
+            }
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+# Ventas por tienda
+@app.get("/tienda/{tienda_id}")
+def ventas_por_tienda(tienda_id: int):
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT 
+                    t.store_name,
+                    t.codigo_postal,
+                    SUM(v.pos_qty)::int as total_unidades,
+                    SUM(v.pos_sales)::numeric as total_ventas,
+                    COUNT(*) as num_registros
+                FROM ventas v
+                JOIN tiendas t ON v.store_id = t.id
+                WHERE v.store_id = :tienda_id
+                GROUP BY t.store_name, t.codigo_postal
+            """), {"tienda_id": tienda_id})
+            row = result.fetchone()
+            data = dict(row._mapping) if row else {}
+            return {
+                "status": "ok",
+                "data": data
+            }
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
-    
-    # En Railway, el puerto es dinámico
-    port = int(os.getenv("PORT", 8000))
-    
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)
