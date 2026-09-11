@@ -15,7 +15,6 @@ export default function MapComponent({ data }) {
     const L = require('leaflet');
     require('leaflet/dist/leaflet.css');
 
-    // Centro dinámico basado en los datos filtrados
     const dataCon = data.filter(d => d.latitude && d.longitude);
     const centerLat = dataCon.length > 0
       ? dataCon.reduce((sum, d) => sum + parseFloat(d.latitude), 0) / dataCon.length
@@ -33,16 +32,24 @@ export default function MapComponent({ data }) {
     const maxVentas = Math.max(...data.map(d => parseFloat(d.total_ventas)));
 
     data.forEach(item => {
-      // USAR COORDENADAS DE LA BD
       const lat = parseFloat(item.latitude);
       const lon = parseFloat(item.longitude);
 
-      if (!lat || !lon) return; // Skip si no tiene coords
+      if (!lat || !lon) return;
 
       const ventas = parseFloat(item.total_ventas);
       const intensity = Math.min(ventas / maxVentas, 1);
-      const hue = intensity * 120;
-      const color = `hsl(${hue}, 100%, 50%)`;
+
+      // 3 COLORES: Verde | Amarillo | Rojo
+      let color;
+      if (intensity >= 0.66) {
+        color = '#27ae60'; // 🟢 Verde - ventas ALTAS
+      } else if (intensity >= 0.33) {
+        color = '#f39c12'; // 🟡 Amarillo - ventas MEDIAS
+      } else {
+        color = '#e74c3c'; // 🔴 Rojo - ventas BAJAS
+      }
+
       const radius = 8 + intensity * 25;
 
       const topProductosHTML = item.top_productos
@@ -71,10 +78,10 @@ export default function MapComponent({ data }) {
       L.circleMarker([lat, lon], {
         radius: radius,
         fillColor: color,
-        color: '#333',
+        color: '#fff',
         weight: 2,
         opacity: 1,
-        fillOpacity: 0.8,
+        fillOpacity: 0.85,
       })
         .bindPopup(popupContent)
         .addTo(mapInstance.current);
