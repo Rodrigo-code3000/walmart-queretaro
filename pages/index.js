@@ -39,248 +39,184 @@ export default function Home() {
   });
 
   const totalVentas = dataFiltrada.reduce((sum, d) => sum + parseFloat(d.total_ventas), 0);
-  const topProducto = dataFiltrada.length > 0 && selectedCp?.top_productos?.length > 0 
-    ? selectedCp.top_productos[0] 
-    : null;
+  const totalUnidades = dataFiltrada.reduce((sum, d) => sum + parseInt(d.total_unidades || 0), 0);
+  const totalRegistros = dataFiltrada.reduce((sum, d) => sum + parseInt(d.registros || 0), 0);
+  const topProducto = selectedCp?.top_productos?.[0] || null;
+
+  const fmt = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
   return (
-    <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* HEADER */}
-      <div style={{
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        padding: '20px 30px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        borderBottom: '3px solid #3498db'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <h1 style={{ margin: '0 0 5px 0', fontSize: '28px', fontWeight: 'bold' }}>
-              🗺️ Mapa de Calor Walmart
-            </h1>
-            <p style={{ margin: 0, fontSize: '12px', color: '#bdc3c7' }}>
-              Análisis de ventas por código postal
-            </p>
-          </div>
-          <div style={{ fontSize: '12px', color: '#95a5a6' }}>
-            Estado: <strong>{filtroEstado}</strong> | CPs: <strong>{dataFiltrada.length}</strong>
-          </div>
-        </div>
+    <div style={{ backgroundColor: '#F7F8FA', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
-        {/* FILTROS */}
-        <Buscador onFiltro={handleFiltro} />
+      {/* HEADER */}
+      <div style={{ backgroundColor: '#0F1923', padding: '0 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
+            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#FFFFFF', letterSpacing: '-0.3px' }}>
+              Análisis de Ventas
+            </h1>
+            <span style={{ fontSize: '13px', color: '#4A5568' }}>por código postal</span>
+          </div>
+          <span style={{ fontSize: '12px', color: '#6B7280', backgroundColor: 'rgba(255,255,255,0.06)', padding: '4px 12px', borderRadius: '20px' }}>
+            {filtroEstado} · {dataFiltrada.length} CPs
+          </span>
+        </div>
+        <div style={{ padding: '16px 0' }}>
+          <Buscador onFiltro={handleFiltro} />
+        </div>
       </div>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <div style={{ padding: '30px', maxWidth: '1400px', margin: '0 auto' }}>
-        
+      {/* MAIN */}
+      <div style={{ padding: '32px 40px', maxWidth: '1440px', margin: '0 auto' }}>
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#7f8c8d' }}>Cargando datos...</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#9CA3AF', fontSize: '14px' }}>
+            Cargando datos...
+          </div>
         ) : (
-          <>
-            {/* MAPA - EL PROTAGONISTA */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '10px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              overflow: 'hidden',
-              marginBottom: '30px',
-              height: '500px'
-            }}>
+          <div>
+            {/* MAPA */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', height: '520px', border: '1px solid #E5E7EB' }}>
               <MapComponent data={dataFiltrada} />
             </div>
 
-            {/* KPIs EN TARJETAS */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '15px',
-              marginBottom: '30px'
-            }}>
-              {/* Total Ventas */}
-              <div style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid #27ae60'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>
-                      💰 TOTAL VENTAS
-                    </p>
-                    <h3 style={{ margin: 0, fontSize: '28px', color: '#27ae60', fontWeight: 'bold' }}>
-                      ${totalVentas.toFixed(0)}
-                    </h3>
-                  </div>
-                </div>
-                <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#95a5a6' }}>
-                  {dataFiltrada.length} código(s) postal(es)
+            {/* KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+
+              <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #059669' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  Ventas totales
+                </p>
+                <h3 style={{ margin: 0, fontSize: '32px', color: '#059669', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
+                  {fmt(totalVentas)}
+                </h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
+                  {dataFiltrada.length} códigos postales
                 </p>
               </div>
 
-              {/* Códigos Postales */}
-              <div style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid #3498db'
-              }}>
-                <div>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>
-                    📍 CÓDIGOS POSTALES
-                  </p>
-                  <h3 style={{ margin: 0, fontSize: '28px', color: '#3498db', fontWeight: 'bold' }}>
-                    {dataFiltrada.length}
-                  </h3>
-                </div>
-                <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#95a5a6' }}>
+              <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #3B82F6' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  Unidades vendidas
+                </p>
+                <h3 style={{ margin: 0, fontSize: '32px', color: '#3B82F6', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
+                  {totalUnidades.toLocaleString()}
+                </h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
                   en {filtroEstado}
                 </p>
               </div>
 
-              {/* Total Registros */}
-              <div style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid #e74c3c'
-              }}>
-                <div>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>
-                    📊 TOTAL REGISTROS
-                  </p>
-                  <h3 style={{ margin: 0, fontSize: '28px', color: '#e74c3c', fontWeight: 'bold' }}>
-                    {dataFiltrada.reduce((sum, d) => sum + parseInt(d.registros || 0), 0)}
-                  </h3>
-                </div>
-                <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#95a5a6' }}>
-                  transacciones
+              <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #F59E0B' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  Transacciones
+                </p>
+                <h3 style={{ margin: 0, fontSize: '32px', color: '#F59E0B', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
+                  {totalRegistros.toLocaleString()}
+                </h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
+                  registros totales
                 </p>
               </div>
 
-              {/* Top Producto */}
-              <div style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                borderLeft: '4px solid #f39c12'
-              }}>
-                <div>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>
-                    🏆 TOP PRODUCTO
-                  </p>
-                  <h3 style={{ margin: 0, fontSize: '14px', color: '#f39c12', fontWeight: 'bold', lineHeight: '1.4' }}>
-                    {topProducto ? topProducto.item_desc.substring(0, 25) + '...' : 'N/A'}
-                  </h3>
-                </div>
-                <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: '#95a5a6' }}>
-                  {topProducto ? topProducto.cantidad + ' unidades' : '---'}
+              <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #8B5CF6' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                  Producto líder
+                </p>
+                <h3 style={{ margin: 0, fontSize: '15px', color: '#8B5CF6', fontWeight: '700', lineHeight: '1.3' }}>
+                  {topProducto ? topProducto.item_desc : '—'}
+                </h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
+                  {topProducto ? `${topProducto.cantidad} unidades` : 'Selecciona un CP'}
                 </p>
               </div>
+
             </div>
 
-            {/* TABLA - DETALLES */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '10px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                backgroundColor: '#34495e',
-                color: 'white',
-                padding: '20px',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}>
-                📈 DETALLES POR CÓDIGO POSTAL
+            {/* TABLA DETALLE */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '1px solid #F3F4F6' }}>
+                <h2 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#111827', letterSpacing: '-0.2px' }}>
+                  Detalle por código postal
+                </h2>
+                <span style={{ fontSize: '12px', color: '#9CA3AF', backgroundColor: '#F3F4F6', padding: '3px 10px', borderRadius: '20px' }}>
+                  {dataFiltrada.length} resultados
+                </span>
               </div>
 
               {dataFiltrada.length === 0 ? (
-                <p style={{ padding: '20px', textAlign: 'center', color: '#7f8c8d' }}>
-                  No hay datos para los filtros seleccionados
-                </p>
+                <div style={{ padding: '48px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+                  No hay datos para los filtros seleccionados.
+                </div>
               ) : (
                 dataFiltrada.map((cp, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     onClick={() => setSelectedCp(cp)}
-                    style={{
-                      padding: '20px',
-                      borderBottom: '1px solid #ecf0f1',
-                      cursor: 'pointer',
-                      backgroundColor: selectedCp?.codigo_postal === cp.codigo_postal ? '#f0f8ff' : 'white',
-                      transition: 'background-color 0.2s',
-                      ':hover': { backgroundColor: '#f8f9fa' }
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 
-                      selectedCp?.codigo_postal === cp.codigo_postal ? '#f0f8ff' : 'white'
-                    }
+                    style={{ padding: '20px 28px', borderBottom: '1px solid #F3F4F6', cursor: 'pointer', backgroundColor: selectedCp?.codigo_postal === cp.codigo_postal ? '#FAFBFF' : '#FFFFFF', transition: 'background-color 0.15s ease' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F9FAFB'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = selectedCp?.codigo_postal === cp.codigo_postal ? '#FAFBFF' : '#FFFFFF'; }}
                   >
-                    {/* Encabezado CP */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '20px', marginBottom: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '24px', marginBottom: '20px', alignItems: 'start' }}>
                       <div>
-                        <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0, fontWeight: 'bold' }}>📍 CP</p>
-                        <h4 style={{ fontSize: '18px', color: '#2c3e50', margin: '5px 0 0 0', fontWeight: 'bold' }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                          Código postal
+                        </p>
+                        <p style={{ margin: '0 0 2px 0', fontSize: '22px', fontWeight: '700', color: '#111827', letterSpacing: '-0.5px' }}>
                           {cp.codigo_postal}
-                        </h4>
-                        <p style={{ fontSize: '11px', color: '#95a5a6', margin: '3px 0 0 0' }}>
-                          {cp.municipio}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
+                          {cp.municipio} · {cp.estado}
                         </p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0, fontWeight: 'bold' }}>💰 VENTAS</p>
-                        <h4 style={{ fontSize: '18px', color: '#27ae60', margin: '5px 0 0 0', fontWeight: 'bold' }}>
-                          ${parseFloat(cp.total_ventas).toFixed(0)}
-                        </h4>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                          Ventas
+                        </p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#059669', letterSpacing: '-0.5px' }}>
+                          {fmt(parseFloat(cp.total_ventas))}
+                        </p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0, fontWeight: 'bold' }}>📦 UNIDADES</p>
-                        <h4 style={{ fontSize: '18px', color: '#3498db', margin: '5px 0 0 0', fontWeight: 'bold' }}>
-                          {cp.total_unidades}
-                        </h4>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                          Unidades
+                        </p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#3B82F6', letterSpacing: '-0.5px' }}>
+                          {parseInt(cp.total_unidades).toLocaleString()}
+                        </p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '11px', color: '#7f8c8d', margin: 0, fontWeight: 'bold' }}>📊 REGISTROS</p>
-                        <h4 style={{ fontSize: '18px', color: '#e74c3c', margin: '5px 0 0 0', fontWeight: 'bold' }}>
-                          {cp.registros}
-                        </h4>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                          Registros
+                        </p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#F59E0B', letterSpacing: '-0.5px' }}>
+                          {parseInt(cp.registros).toLocaleString()}
+                        </p>
                       </div>
                     </div>
 
-                    {/* TOP 5 PRODUCTOS */}
                     {cp.top_productos.length > 0 && (
-                      <div>
-                        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#34495e', margin: '15px 0 10px 0' }}>
-                          🏆 TOP 5 PRODUCTOS
+                      <div style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px' }}>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                          Top 5 productos
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
                           {cp.top_productos.map((prod, i) => (
-                            <div key={i} style={{
-                              backgroundColor: '#f8f9fa',
-                              padding: '12px',
-                              borderRadius: '6px',
-                              border: '1px solid #ecf0f1',
-                              textAlign: 'center'
-                            }}>
-                              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#e74c3c', marginBottom: '5px' }}>
+                            <div
+                              key={i}
+                              style={{ backgroundColor: prod.ranking === 1 ? '#FAFBFF' : '#FAFAFA', padding: '14px', borderRadius: '8px', border: prod.ranking === 1 ? '1px solid #DBEAFE' : '1px solid #F3F4F6' }}
+                            >
+                              <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: '700', color: prod.ranking === 1 ? '#3B82F6' : '#D1D5DB', letterSpacing: '0.5px' }}>
                                 #{prod.ranking}
-                              </div>
-                              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px', lineHeight: '1.3' }}>
-                                {prod.item_desc.substring(0, 25)}...
-                              </div>
-                              <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '3px' }}>
+                              </p>
+                              <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '600', color: '#374151', lineHeight: '1.4' }}>
+                                {prod.item_desc.length > 28 ? prod.item_desc.substring(0, 28) + '…' : prod.item_desc}
+                              </p>
+                              <p style={{ margin: '0 0 2px 0', fontSize: '11px', color: '#9CA3AF' }}>
                                 {prod.cantidad} unidades
-                              </div>
-                              <div style={{ fontSize: '12px', color: '#27ae60', fontWeight: 'bold' }}>
+                              </p>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#059669', fontWeight: '700' }}>
                                 ${parseFloat(prod.ventas).toFixed(0)}
-                              </div>
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -290,7 +226,8 @@ export default function Home() {
                 ))
               )}
             </div>
-          </>
+
+          </div>
         )}
       </div>
     </div>
