@@ -31,11 +31,22 @@ export default function MapComponent({ data }) {
 
     const maxVentas = Math.max(...data.map(d => parseFloat(d.total_ventas)));
 
+    // Rastrear coordenadas usadas para evitar encimamiento
+    const usedCoords = {};
+
     data.forEach(item => {
-      const lat = parseFloat(item.latitude);
-      const lon = parseFloat(item.longitude);
+      let lat = parseFloat(item.latitude);
+      let lon = parseFloat(item.longitude);
 
       if (!lat || !lon) return;
+
+      // Si ya existe punto en estas coords, desplaza ligeramente
+      const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+      if (usedCoords[key]) {
+        lat += (Math.random() - 0.5) * 0.05;
+        lon += (Math.random() - 0.5) * 0.05;
+      }
+      usedCoords[key] = true;
 
       const ventas = parseFloat(item.total_ventas);
       const intensity = Math.min(ventas / maxVentas, 1);
