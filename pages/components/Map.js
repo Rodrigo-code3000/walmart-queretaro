@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 
-export default function MapComponent({ data }) {
+export default function MapComponent({ data, selectedCp }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
 
+  // Renderizar mapa cuando cambian los datos
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
@@ -30,8 +31,6 @@ export default function MapComponent({ data }) {
     }).addTo(mapInstance.current);
 
     const maxVentas = Math.max(...data.map(d => parseFloat(d.total_ventas)));
-
-    // Rastrear coordenadas usadas para evitar encimamiento
     const usedCoords = {};
 
     data.forEach(item => {
@@ -40,7 +39,6 @@ export default function MapComponent({ data }) {
 
       if (!lat || !lon) return;
 
-      // Si ya existe punto en estas coords, desplaza ligeramente
       const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
       if (usedCoords[key]) {
         lat += (Math.random() - 0.5) * 0.05;
@@ -51,37 +49,51 @@ export default function MapComponent({ data }) {
       const ventas = parseFloat(item.total_ventas);
       const intensity = Math.min(ventas / maxVentas, 1);
 
-      // 3 COLORES: Verde | Amarillo | Rojo
       let color;
       if (intensity >= 0.66) {
-        color = '#27ae60'; // 🟢 Verde - ventas ALTAS
+        color = '#27ae60';
       } else if (intensity >= 0.33) {
-        color = '#f39c12'; // 🟡 Amarillo - ventas MEDIAS
+        color = '#f39c12';
       } else {
-        color = '#e74c3c'; // 🔴 Rojo - ventas BAJAS
+        color = '#e74c3c';
       }
 
       const radius = 8 + intensity * 25;
 
+      const fmt = (n) => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
       const topProductosHTML = item.top_productos
         .slice(0, 5)
         .map((prod) => `
-          <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
-            <strong>#${prod.ranking}</strong> ${prod.item_desc}
-            <br/><small>📦 ${prod.cantidad} unidades | $${parseFloat(prod.ventas).toFixed(2)}</small>
+          <div style="padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+            <span style="font-weight:700; color:#3B82F6;">#${prod.ranking}</span>
+            <span style="margin-left:6px; color:#374151;">${prod.item_desc}</span>
+            <div style="margin-top:2px; color:#9CA3AF; font-size:11px;">
+              ${prod.cantidad} unidades · ${fmt(parseFloat(prod.ventas))}
+            </div>
           </div>
         `)
         .join('');
 
       const popupContent = `
-        <div style="font-family: Arial; font-size: 12px; width: 300px;">
-          <h3 style="margin: 0 0 10px 0; color: #2c3e50;">${item.municipio}</h3>
-          <strong>CP: ${item.codigo_postal}</strong><br/>
-          💰 Ventas: <strong>$${ventas.toFixed(2)}</strong><br/>
-          📦 Unidades: ${item.total_unidades}<br/>
-          📊 Registros: ${item.registros}<br/>
-          <hr style="margin: 10px 0;"/>
-          <strong>🏆 TOP 5 PRODUCTOS:</strong>
+        <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 300px; padding: 4px;">
+          <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:2px;">${item.municipio}</div>
+          <div style="font-size:12px; color:#6B7280; margin-bottom:12px;">CP ${item.codigo_postal} · ${item.estado}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+            <div>
+              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Ventas</div>
+              <div style="font-size:15px; font-weight:700; color:#059669;">${fmt(ventas)}</div>
+            </div>
+            <div>
+              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Unidades</div>
+              <div style="font-size:15px; font-weight:700; color:#3B82F6;">${item.total_unidades}</div>
+            </div>
+            <div>
+              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Registros</div>
+              <div style="font-size:15px; font-weight:700; color:#F59E0B;">${item.registros}</div>
+            </div>
+          </div>
+          <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Top 5 productos</div>
           ${topProductosHTML}
         </div>
       `;
@@ -94,7 +106,7 @@ export default function MapComponent({ data }) {
         opacity: 1,
         fillOpacity: 0.85,
       })
-        .bindPopup(popupContent)
+        .bindPopup(popupContent, { maxWidth: 320 })
         .addTo(mapInstance.current);
     });
 
@@ -105,6 +117,15 @@ export default function MapComponent({ data }) {
       }
     };
   }, [data]);
+
+  // Volar al CP seleccionado desde la tabla
+  useEffect(() => {
+    if (!mapInstance.current || !selectedCp) return;
+    const lat = parseFloat(selectedCp.latitude);
+    const lon = parseFloat(selectedCp.longitude);
+    if (!lat || !lon) return;
+    mapInstance.current.flyTo([lat, lon], 12, { duration: 1.2 });
+  }, [selectedCp]);
 
   return <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '5px' }} />;
 }

@@ -43,12 +43,11 @@ export default function Home() {
   const totalRegistros = dataFiltrada.reduce((sum, d) => sum + parseInt(d.registros || 0), 0);
   const topProducto = selectedCp?.top_productos?.[0] || null;
 
-  const fmt = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
+  const fmt = (n) => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   return (
     <div style={{ backgroundColor: '#F7F8FA', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
-      {/* HEADER */}
       <div style={{ backgroundColor: '#0F1923', padding: '0 40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
@@ -66,7 +65,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MAIN */}
       <div style={{ padding: '32px 40px', maxWidth: '1440px', margin: '0 auto' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#9CA3AF', fontSize: '14px' }}>
@@ -74,73 +72,42 @@ export default function Home() {
           </div>
         ) : (
           <div>
-            {/* MAPA */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', height: '520px', border: '1px solid #E5E7EB' }}>
-              <MapComponent data={dataFiltrada} />
+              <MapComponent data={dataFiltrada} selectedCp={selectedCp} />
             </div>
 
-            {/* KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #059669' }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                  Ventas totales
-                </p>
-                <h3 style={{ margin: 0, fontSize: '32px', color: '#059669', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
-                  {fmt(totalVentas)}
-                </h3>
-                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  {dataFiltrada.length} códigos postales
-                </p>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Ventas totales</p>
+                <h3 style={{ margin: 0, fontSize: '28px', color: '#059669', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>{fmt(totalVentas)}</h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>{dataFiltrada.length} códigos postales</p>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #3B82F6' }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                  Unidades vendidas
-                </p>
-                <h3 style={{ margin: 0, fontSize: '32px', color: '#3B82F6', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
-                  {totalUnidades.toLocaleString()}
-                </h3>
-                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  en {filtroEstado}
-                </p>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Unidades vendidas</p>
+                <h3 style={{ margin: 0, fontSize: '32px', color: '#3B82F6', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>{totalUnidades.toLocaleString('es-MX')}</h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>en {filtroEstado}</p>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #F59E0B' }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                  Transacciones
-                </p>
-                <h3 style={{ margin: 0, fontSize: '32px', color: '#F59E0B', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>
-                  {totalRegistros.toLocaleString()}
-                </h3>
-                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  registros totales
-                </p>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Transacciones</p>
+                <h3 style={{ margin: 0, fontSize: '32px', color: '#F59E0B', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>{totalRegistros.toLocaleString('es-MX')}</h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>registros totales</p>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #8B5CF6' }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                  Producto líder
-                </p>
-                <h3 style={{ margin: 0, fontSize: '15px', color: '#8B5CF6', fontWeight: '700', lineHeight: '1.3' }}>
-                  {topProducto ? topProducto.item_desc : '—'}
-                </h3>
-                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  {topProducto ? `${topProducto.cantidad} unidades` : 'Selecciona un CP'}
-                </p>
+                <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Producto líder</p>
+                <h3 style={{ margin: 0, fontSize: '15px', color: '#8B5CF6', fontWeight: '700', lineHeight: '1.3' }}>{topProducto ? topProducto.item_desc : '—'}</h3>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>{topProducto ? topProducto.cantidad + ' unidades' : 'Selecciona un CP'}</p>
               </div>
 
             </div>
 
-            {/* TABLA DETALLE */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '1px solid #F3F4F6' }}>
-                <h2 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#111827', letterSpacing: '-0.2px' }}>
-                  Detalle por código postal
-                </h2>
-                <span style={{ fontSize: '12px', color: '#9CA3AF', backgroundColor: '#F3F4F6', padding: '3px 10px', borderRadius: '20px' }}>
-                  {dataFiltrada.length} resultados
-                </span>
+                <h2 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#111827', letterSpacing: '-0.2px' }}>Detalle por código postal</h2>
+                <span style={{ fontSize: '12px', color: '#9CA3AF', backgroundColor: '#F3F4F6', padding: '3px 10px', borderRadius: '20px' }}>{dataFiltrada.length} resultados</span>
               </div>
 
               {dataFiltrada.length === 0 ? (
@@ -158,65 +125,39 @@ export default function Home() {
                   >
                     <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '24px', marginBottom: '20px', alignItems: 'start' }}>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                          Código postal
-                        </p>
-                        <p style={{ margin: '0 0 2px 0', fontSize: '22px', fontWeight: '700', color: '#111827', letterSpacing: '-0.5px' }}>
-                          {cp.codigo_postal}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
-                          {cp.municipio} · {cp.estado}
-                        </p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Código postal</p>
+                        <p style={{ margin: '0 0 2px 0', fontSize: '22px', fontWeight: '700', color: '#111827', letterSpacing: '-0.5px' }}>{cp.codigo_postal}</p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{cp.municipio} · {cp.estado}</p>
                       </div>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                          Ventas
-                        </p>
-                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#059669', letterSpacing: '-0.5px' }}>
-                          {fmt(parseFloat(cp.total_ventas))}
-                        </p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Ventas</p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#059669', letterSpacing: '-0.5px' }}>{fmt(parseFloat(cp.total_ventas))}</p>
                       </div>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                          Unidades
-                        </p>
-                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#3B82F6', letterSpacing: '-0.5px' }}>
-                          {parseInt(cp.total_unidades).toLocaleString()}
-                        </p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Unidades</p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#3B82F6', letterSpacing: '-0.5px' }}>{parseInt(cp.total_unidades).toLocaleString('es-MX')}</p>
                       </div>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
-                          Registros
-                        </p>
-                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#F59E0B', letterSpacing: '-0.5px' }}>
-                          {parseInt(cp.registros).toLocaleString()}
-                        </p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Registros</p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#F59E0B', letterSpacing: '-0.5px' }}>{parseInt(cp.registros).toLocaleString('es-MX')}</p>
                       </div>
                     </div>
 
                     {cp.top_productos.length > 0 && (
                       <div style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px' }}>
-                        <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
-                          Top 5 productos
-                        </p>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Top 5 productos</p>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
                           {cp.top_productos.map((prod, i) => (
                             <div
                               key={i}
                               style={{ backgroundColor: prod.ranking === 1 ? '#FAFBFF' : '#FAFAFA', padding: '14px', borderRadius: '8px', border: prod.ranking === 1 ? '1px solid #DBEAFE' : '1px solid #F3F4F6' }}
                             >
-                              <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: '700', color: prod.ranking === 1 ? '#3B82F6' : '#D1D5DB', letterSpacing: '0.5px' }}>
-                                #{prod.ranking}
-                              </p>
+                              <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: '700', color: prod.ranking === 1 ? '#3B82F6' : '#D1D5DB', letterSpacing: '0.5px' }}>#{prod.ranking}</p>
                               <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '600', color: '#374151', lineHeight: '1.4' }}>
                                 {prod.item_desc.length > 28 ? prod.item_desc.substring(0, 28) + '…' : prod.item_desc}
                               </p>
-                              <p style={{ margin: '0 0 2px 0', fontSize: '11px', color: '#9CA3AF' }}>
-                                {prod.cantidad} unidades
-                              </p>
-                              <p style={{ margin: 0, fontSize: '12px', color: '#059669', fontWeight: '700' }}>
-                                ${parseFloat(prod.ventas).toFixed(0)}
-                              </p>
+                              <p style={{ margin: '0 0 2px 0', fontSize: '11px', color: '#9CA3AF' }}>{prod.cantidad} unidades</p>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#059669', fontWeight: '700' }}>{fmt(parseFloat(prod.ventas))}</p>
                             </div>
                           ))}
                         </div>
