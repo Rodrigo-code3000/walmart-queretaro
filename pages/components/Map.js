@@ -7,7 +7,6 @@ export default function MapComponent({ data }) {
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
-    // ¡¡¡LIMPIAR EL MAPA ANTERIOR!!!
     if (mapInstance.current) {
       mapInstance.current.remove();
       mapInstance.current = null;
@@ -16,46 +15,39 @@ export default function MapComponent({ data }) {
     const L = require('leaflet');
     require('leaflet/dist/leaflet.css');
 
-    // Crear NUEVO mapa
-    mapInstance.current = L.map(mapRef.current).setView([20.59, -100.39], 9);
+    // Centro dinámico basado en los datos filtrados
+    const dataCon = data.filter(d => d.latitude && d.longitude);
+    const centerLat = dataCon.length > 0
+      ? dataCon.reduce((sum, d) => sum + parseFloat(d.latitude), 0) / dataCon.length
+      : 20.59;
+    const centerLon = dataCon.length > 0
+      ? dataCon.reduce((sum, d) => sum + parseFloat(d.longitude), 0) / dataCon.length
+      : -99.0;
+
+    mapInstance.current = L.map(mapRef.current).setView([centerLat, centerLon], 7);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(mapInstance.current);
 
-    const coordsMap = {
-      '76116': [20.58, -100.41],
-      '76130': [20.60, -100.40],
-      '76146': [20.63, -100.38],
-      '76160': [20.57, -100.42],
-      '76180': [20.55, -100.39],
-      '76118': [20.59, -100.40],
-      '76803': [20.73, -99.99],
-      '76147': [20.64, -100.37],
-      '76190': [20.56, -100.43],
-      '76135': [20.61, -100.39],
-      '76110': [20.59, -100.38],
-      '76138': [20.60, -100.42],
-      '76246': [20.50, -100.35],
-      '76750': [20.76, -99.70],
-      '76500': [21.00, -99.62],
-      '76220': [20.68, -100.15],
-    };
-
     const maxVentas = Math.max(...data.map(d => parseFloat(d.total_ventas)));
 
     data.forEach(item => {
-      const coords = coordsMap[item.codigo_postal] || [20.59, -100.39];
+      // USAR COORDENADAS DE LA BD
+      const lat = parseFloat(item.latitude);
+      const lon = parseFloat(item.longitude);
+
+      if (!lat || !lon) return; // Skip si no tiene coords
+
       const ventas = parseFloat(item.total_ventas);
       const intensity = Math.min(ventas / maxVentas, 1);
-      
       const hue = intensity * 120;
       const color = `hsl(${hue}, 100%, 50%)`;
       const radius = 8 + intensity * 25;
 
       const topProductosHTML = item.top_productos
         .slice(0, 5)
-        .map((prod, i) => `
+        .map((prod) => `
           <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
             <strong>#${prod.ranking}</strong> ${prod.item_desc}
             <br/><small>📦 ${prod.cantidad} unidades | $${parseFloat(prod.ventas).toFixed(2)}</small>
@@ -76,7 +68,7 @@ export default function MapComponent({ data }) {
         </div>
       `;
 
-      L.circleMarker(coords, {
+      L.circleMarker([lat, lon], {
         radius: radius,
         fillColor: color,
         color: '#333',
@@ -88,7 +80,6 @@ export default function MapComponent({ data }) {
         .addTo(mapInstance.current);
     });
 
-    // Limpiar al desmontar
     return () => {
       if (mapInstance.current) {
         mapInstance.current.remove();

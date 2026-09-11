@@ -9,12 +9,13 @@ export default async function handler(req, res) {
     
     await client.connect();
     
-    // Resumen por CP (AGREGAR t.estado)
     const resumenResult = await client.query(`
       SELECT 
         t.codigo_postal,
         t.municipio,
         t.estado,
+        AVG(t.latitude)::float as latitude,
+        AVG(t.longitude)::float as longitude,
         SUM(v.pos_qty)::int as total_unidades,
         SUM(v.pos_sales)::float as total_ventas,
         COUNT(*)::int as registros
@@ -24,7 +25,6 @@ export default async function handler(req, res) {
       ORDER BY total_ventas DESC
     `);
     
-    // Top 5 productos (también agregar estado)
     const productosResult = await client.query(`
       SELECT 
         t.codigo_postal,
@@ -41,13 +41,10 @@ export default async function handler(req, res) {
     
     await client.end();
     
-    // Agrupar TOP 5 por CP
     const productosPorCP = {};
     productosResult.rows.forEach(row => {
       const key = row.codigo_postal;
-      if (!productosPorCP[key]) {
-        productosPorCP[key] = [];
-      }
+      if (!productosPorCP[key]) productosPorCP[key] = [];
       if (productosPorCP[key].length < 5) {
         productosPorCP[key].push({
           ranking: productosPorCP[key].length + 1,
@@ -58,7 +55,6 @@ export default async function handler(req, res) {
       }
     });
     
-    // Combinar
     const data = resumenResult.rows.map(row => ({
       ...row,
       top_productos: productosPorCP[row.codigo_postal] || []
