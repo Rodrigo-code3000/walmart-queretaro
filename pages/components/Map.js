@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
 
-export default function MapComponent({ data, selectedCp }) {
+export default function MapComponent({ data, selectedCp, capa }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
 
-  // Renderizar mapa cuando cambian los datos
   useEffect(() => {
     if (!mapRef.current || !data || data.length === 0) return;
 
@@ -30,12 +29,19 @@ export default function MapComponent({ data, selectedCp }) {
       attribution: '© OpenStreetMap'
     }).addTo(mapInstance.current);
 
-    const maxVentas = Math.max(...data.map(d => parseFloat(d.total_ventas)));
+    const fmt = (n) => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+    // Obtener ventas según capa
+    const getVentas = (item) => capa === 'walmart'
+      ? parseFloat(item.total_ventas || 0)
+      : parseFloat(item.ventas || 0);
+
+    const maxVentas = Math.max(...data.map(d => getVentas(d)));
     const usedCoords = {};
 
     data.forEach(item => {
-      let lat = parseFloat(item.latitude);
-      let lon = parseFloat(item.longitude);
+      let lat = parseFloat(item.latitude || item.latitud);
+      let lon = parseFloat(item.longitude || item.longitud);
 
       if (!lat || !lon) return;
 
@@ -46,8 +52,8 @@ export default function MapComponent({ data, selectedCp }) {
       }
       usedCoords[key] = true;
 
-      const ventas = parseFloat(item.total_ventas);
-      const intensity = Math.min(ventas / maxVentas, 1);
+      const ventas = getVentas(item);
+      const intensity = maxVentas > 0 ? Math.min(ventas / maxVentas, 1) : 0;
 
       let color;
       if (intensity >= 0.66) {
@@ -60,43 +66,62 @@ export default function MapComponent({ data, selectedCp }) {
 
       const radius = 8 + intensity * 25;
 
-      const fmt = (n) => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      // Popup según capa
+      let popupContent;
+      if (capa === 'walmart') {
+        const topProductosHTML = (item.top_productos || [])
+          .slice(0, 5)
+          .map((prod) => `
+            <div style="padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight:700; color:#3B82F6;">#${prod.ranking}</span>
+              <span style="margin-left:6px; color:#374151;">${prod.item_desc}</span>
+              <div style="margin-top:2px; color:#9CA3AF; font-size:11px;">
+                ${prod.cantidad} unidades · ${fmt(parseFloat(prod.ventas))}
+              </div>
+            </div>
+          `)
+          .join('');
 
-      const topProductosHTML = item.top_productos
-        .slice(0, 5)
-        .map((prod) => `
-          <div style="padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-            <span style="font-weight:700; color:#3B82F6;">#${prod.ranking}</span>
-            <span style="margin-left:6px; color:#374151;">${prod.item_desc}</span>
-            <div style="margin-top:2px; color:#9CA3AF; font-size:11px;">
-              ${prod.cantidad} unidades · ${fmt(parseFloat(prod.ventas))}
+        popupContent = `
+          <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 300px; padding: 4px;">
+            <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:2px;">${item.municipio}</div>
+            <div style="font-size:12px; color:#6B7280; margin-bottom:12px;">CP ${item.codigo_postal} · ${item.estado}</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+              <div>
+                <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Ventas</div>
+                <div style="font-size:15px; font-weight:700; color:#059669;">${fmt(ventas)}</div>
+              </div>
+              <div>
+                <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Unidades</div>
+                <div style="font-size:15px; font-weight:700; color:#3B82F6;">${item.total_unidades}</div>
+              </div>
+              <div>
+                <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Registros</div>
+                <div style="font-size:15px; font-weight:700; color:#F59E0B;">${item.registros}</div>
+              </div>
+            </div>
+            <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Top 5 productos</div>
+            ${topProductosHTML}
+          </div>
+        `;
+      } else {
+        popupContent = `
+          <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 260px; padding: 4px;">
+            <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:2px;">${item.municipio}</div>
+            <div style="font-size:12px; color:#6B7280; margin-bottom:12px;">CP ${item.codigo_postal} · ${item.estado}</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Ventas</div>
+                <div style="font-size:15px; font-weight:700; color:#059669;">${fmt(ventas)}</div>
+              </div>
+              <div>
+                <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Unidades</div>
+                <div style="font-size:15px; font-weight:700; color:#3B82F6;">${item.unidades}</div>
+              </div>
             </div>
           </div>
-        `)
-        .join('');
-
-      const popupContent = `
-        <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 300px; padding: 4px;">
-          <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:2px;">${item.municipio}</div>
-          <div style="font-size:12px; color:#6B7280; margin-bottom:12px;">CP ${item.codigo_postal} · ${item.estado}</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-            <div>
-              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Ventas</div>
-              <div style="font-size:15px; font-weight:700; color:#059669;">${fmt(ventas)}</div>
-            </div>
-            <div>
-              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Unidades</div>
-              <div style="font-size:15px; font-weight:700; color:#3B82F6;">${item.total_unidades}</div>
-            </div>
-            <div>
-              <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Registros</div>
-              <div style="font-size:15px; font-weight:700; color:#F59E0B;">${item.registros}</div>
-            </div>
-          </div>
-          <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Top 5 productos</div>
-          ${topProductosHTML}
-        </div>
-      `;
+        `;
+      }
 
       L.circleMarker([lat, lon], {
         radius: radius,
@@ -116,13 +141,12 @@ export default function MapComponent({ data, selectedCp }) {
         mapInstance.current = null;
       }
     };
-  }, [data]);
+  }, [data, capa]);
 
-  // Volar al CP seleccionado desde la tabla
   useEffect(() => {
     if (!mapInstance.current || !selectedCp) return;
-    const lat = parseFloat(selectedCp.latitude);
-    const lon = parseFloat(selectedCp.longitude);
+    const lat = parseFloat(selectedCp.latitude || selectedCp.latitud);
+    const lon = parseFloat(selectedCp.longitude || selectedCp.longitud);
     if (!lat || !lon) return;
     mapInstance.current.flyTo([lat, lon], 12, { duration: 1.2 });
   }, [selectedCp]);
