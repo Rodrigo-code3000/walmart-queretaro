@@ -31,7 +31,6 @@ export default function MapComponent({ data, selectedCp, capa }) {
 
     const fmt = (n) => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-    // Obtener ventas según capa
     const getVentas = (item) => capa === 'walmart'
       ? parseFloat(item.total_ventas || 0)
       : parseFloat(item.ventas || 0);
@@ -66,8 +65,8 @@ export default function MapComponent({ data, selectedCp, capa }) {
 
       const radius = 8 + intensity * 25;
 
-      // Popup según capa
       let popupContent;
+
       if (capa === 'walmart') {
         const topProductosHTML = (item.top_productos || [])
           .slice(0, 5)
@@ -105,11 +104,25 @@ export default function MapComponent({ data, selectedCp, capa }) {
           </div>
         `;
       } else {
+        // PARTICULARES CON TOP 5
+        const topParticularesHTML = (item.top_productos || [])
+          .slice(0, 5)
+          .map((prod) => `
+            <div style="padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-weight:700; color:#3B82F6;">#${prod.ranking}</span>
+              <span style="margin-left:6px; color:#374151;">${prod.item_desc}</span>
+              <div style="margin-top:2px; color:#9CA3AF; font-size:11px;">
+                ${prod.cantidad} unidades · ${fmt(parseFloat(prod.ventas))}
+              </div>
+            </div>
+          `)
+          .join('');
+
         popupContent = `
-          <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 260px; padding: 4px;">
+          <div style="font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; width: 300px; padding: 4px;">
             <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:2px;">${item.municipio}</div>
             <div style="font-size:12px; color:#6B7280; margin-bottom:12px;">CP ${item.codigo_postal} · ${item.estado}</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
               <div>
                 <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase;">Ventas</div>
                 <div style="font-size:15px; font-weight:700; color:#059669;">${fmt(ventas)}</div>
@@ -119,6 +132,8 @@ export default function MapComponent({ data, selectedCp, capa }) {
                 <div style="font-size:15px; font-weight:700; color:#3B82F6;">${item.unidades}</div>
               </div>
             </div>
+            <div style="font-size:10px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Top 5 productos</div>
+            ${topParticularesHTML.length > 0 ? topParticularesHTML : '<div style="color:#9CA3AF; font-size:12px;">Sin productos registrados</div>'}
           </div>
         `;
       }
