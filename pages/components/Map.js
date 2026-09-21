@@ -35,7 +35,6 @@ export default function MapComponent({ data, selectedCp, capa }) {
       ? parseFloat(item.total_ventas || 0)
       : parseFloat(item.ventas || 0);
 
-    const maxVentas = Math.max(...data.map(d => getVentas(d)));
     const usedCoords = {};
 
     data.forEach(item => {
@@ -52,15 +51,33 @@ export default function MapComponent({ data, selectedCp, capa }) {
       usedCoords[key] = true;
 
       const ventas = getVentas(item);
-      const intensity = maxVentas > 0 ? Math.min(ventas / maxVentas, 1) : 0;
 
+      // COLORES POR RANGOS APROBADOS
       let color;
-      if (intensity >= 0.66) {
-        color = '#27ae60';
-      } else if (intensity >= 0.33) {
-        color = '#f39c12';
+      let intensity;
+
+      if (capa === 'walmart') {
+        if (ventas >= 100000) {
+          color = '#27ae60'; // Verde
+          intensity = 1;
+        } else if (ventas >= 10000) {
+          color = '#f39c12'; // Naranja
+          intensity = 0.6;
+        } else {
+          color = '#e74c3c'; // Rojo
+          intensity = 0.3;
+        }
       } else {
-        color = '#e74c3c';
+        if (ventas >= 30000) {
+          color = '#27ae60'; // Verde
+          intensity = 1;
+        } else if (ventas >= 5000) {
+          color = '#f39c12'; // Naranja
+          intensity = 0.6;
+        } else {
+          color = '#e74c3c'; // Rojo
+          intensity = 0.3;
+        }
       }
 
       const radius = 8 + intensity * 25;
@@ -104,7 +121,6 @@ export default function MapComponent({ data, selectedCp, capa }) {
           </div>
         `;
       } else {
-        // PARTICULARES CON TOP 5
         const topParticularesHTML = (item.top_productos || [])
           .slice(0, 5)
           .map((prod) => `
@@ -149,6 +165,56 @@ export default function MapComponent({ data, selectedCp, capa }) {
         .bindPopup(popupContent, { maxWidth: 320 })
         .addTo(mapInstance.current);
     });
+
+    // LEYENDA DE PARÁMETROS
+    const leyenda = L.control({ position: 'bottomright' });
+    leyenda.onAdd = () => {
+      const div = L.DomUtil.create('div');
+      const rangos = capa === 'walmart'
+        ? [
+            { color: '#27ae60', label: 'Más de $100,000' },
+            { color: '#f39c12', label: '$10,000 — $100,000' },
+            { color: '#e74c3c', label: 'Menos de $10,000' },
+          ]
+        : [
+            { color: '#27ae60', label: 'Más de $30,000' },
+            { color: '#f39c12', label: '$5,000 — $30,000' },
+            { color: '#e74c3c', label: 'Menos de $5,000' },
+          ];
+
+      div.innerHTML = `
+        <div style="
+          background: white;
+          padding: 14px 16px;
+          border-radius: 10px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+          font-family: 'Inter', -apple-system, sans-serif;
+          min-width: 180px;
+          border: 1px solid #E5E7EB;
+        ">
+          <div style="font-weight:700; color:#111827; margin-bottom:10px; font-size:11px; text-transform:uppercase; letter-spacing:0.6px;">
+            Ventas por CP
+          </div>
+          ${rangos.map(r => `
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <div style="
+                width:14px; height:14px;
+                border-radius:50%;
+                background:${r.color};
+                flex-shrink:0;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+              "></div>
+              <span style="color:#374151; font-size:12px;">${r.label}</span>
+            </div>
+          `).join('')}
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid #F3F4F6; font-size:10px; color:#9CA3AF;">
+            ${capa === 'walmart' ? 'Canal Walmart' : 'Clientes Particulares'}
+          </div>
+        </div>
+      `;
+      return div;
+    };
+    leyenda.addTo(mapInstance.current);
 
     return () => {
       if (mapInstance.current) {
