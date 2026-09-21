@@ -5,7 +5,7 @@ import Buscador from './components/Buscador';
 const MapComponent = dynamic(() => import('./components/Map'), { ssr: false });
 
 export default function Home() {
-  const [capa, setCapa] = useState('walmart'); // 'walmart' o 'particulares'
+  const [capa, setCapa] = useState('walmart');
   const [data, setData] = useState([]);
   const [dataParticulares, setDataParticulares] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,6 @@ export default function Home() {
   const [filtroCp, setFiltroCp] = useState('');
   const [selectedCp, setSelectedCp] = useState(null);
 
-  // Cargar datos Walmart
   useEffect(() => {
     fetch('/api/ventas')
       .then(r => r.json())
@@ -30,7 +29,6 @@ export default function Home() {
       .catch(err => console.error(err));
   }, []);
 
-  // Cargar datos Particulares
   useEffect(() => {
     fetch('/api/particulares')
       .then(r => r.json())
@@ -52,7 +50,6 @@ export default function Home() {
     setFiltroCp('');
   };
 
-  // Filtrar datos según capa activa
   const dataFiltrada = capa === 'walmart'
     ? data.filter(d => {
         const matchEstado = !filtroEstado || d.estado === filtroEstado;
@@ -77,7 +74,6 @@ export default function Home() {
   return (
     <div style={{ backgroundColor: '#F7F8FA', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
-      {/* HEADER */}
       <div style={{ backgroundColor: '#0F1923', padding: '0 40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
@@ -91,49 +87,25 @@ export default function Home() {
           </span>
         </div>
 
-        {/* SELECTOR DE CAPA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '16px 0' }}>
           <button
             onClick={() => handleCapa('walmart')}
-            style={{
-              padding: '8px 20px',
-              borderRadius: '20px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '600',
-              backgroundColor: capa === 'walmart' ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
-              color: capa === 'walmart' ? '#0F1923' : '#6B7280',
-              transition: 'all 0.2s ease',
-            }}
+            style={{ padding: '8px 20px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: capa === 'walmart' ? '#FFFFFF' : 'rgba(255,255,255,0.08)', color: capa === 'walmart' ? '#0F1923' : '#6B7280', transition: 'all 0.2s ease' }}
           >
             Walmart
           </button>
           <button
             onClick={() => handleCapa('particulares')}
-            style={{
-              padding: '8px 20px',
-              borderRadius: '20px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '600',
-              backgroundColor: capa === 'particulares' ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
-              color: capa === 'particulares' ? '#0F1923' : '#6B7280',
-              transition: 'all 0.2s ease',
-            }}
+            style={{ padding: '8px 20px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: capa === 'particulares' ? '#FFFFFF' : 'rgba(255,255,255,0.08)', color: capa === 'particulares' ? '#0F1923' : '#6B7280', transition: 'all 0.2s ease' }}
           >
             Clientes Particulares
           </button>
-
-          {/* FILTROS */}
           <div style={{ marginLeft: '16px', flex: 1 }}>
             <Buscador onFiltro={handleFiltro} capa={capa} />
           </div>
         </div>
       </div>
 
-      {/* MAIN */}
       <div style={{ padding: '32px 40px', maxWidth: '1440px', margin: '0 auto' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#9CA3AF', fontSize: '14px' }}>
@@ -141,12 +113,10 @@ export default function Home() {
           </div>
         ) : (
           <div>
-            {/* MAPA */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', height: '520px', border: '1px solid #E5E7EB' }}>
               <MapComponent data={dataFiltrada} selectedCp={selectedCp} capa={capa} />
             </div>
 
-            {/* KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #059669' }}>
                 <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Ventas totales</p>
@@ -157,9 +127,7 @@ export default function Home() {
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #3B82F6' }}>
                 <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Unidades vendidas</p>
                 <h3 style={{ margin: 0, fontSize: '32px', color: '#3B82F6', fontWeight: '700', letterSpacing: '-1px', lineHeight: 1 }}>{totalUnidades.toLocaleString('es-MX')}</h3>
-                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  {capa === 'walmart' ? 'canal retail' : 'canal directo'}
-                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>{capa === 'walmart' ? 'canal retail' : 'canal directo'}</p>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '24px', borderRadius: '12px', border: '1px solid #E5E7EB', borderTop: '3px solid #F59E0B' }}>
@@ -173,19 +141,14 @@ export default function Home() {
                   {capa === 'walmart' ? 'Producto líder' : 'Canal activo'}
                 </p>
                 <h3 style={{ margin: 0, fontSize: '15px', color: '#8B5CF6', fontWeight: '700', lineHeight: '1.3' }}>
-                  {capa === 'walmart'
-                    ? (topProducto ? topProducto.item_desc : '—')
-                    : 'Clientes Particulares'}
+                  {capa === 'walmart' ? (topProducto ? topProducto.item_desc : '—') : 'Clientes Particulares'}
                 </h3>
                 <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-                  {capa === 'walmart'
-                    ? (topProducto ? topProducto.cantidad + ' unidades' : 'Selecciona un CP')
-                    : dataParticulares.length + ' registros totales'}
+                  {capa === 'walmart' ? (topProducto ? topProducto.cantidad + ' unidades' : 'Selecciona un CP') : dataParticulares.length + ' registros totales'}
                 </p>
               </div>
             </div>
 
-            {/* TABLA */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '1px solid #F3F4F6' }}>
                 <h2 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#111827', letterSpacing: '-0.2px' }}>
@@ -201,7 +164,6 @@ export default function Home() {
                   No hay datos para los filtros seleccionados.
                 </div>
               ) : capa === 'walmart' ? (
-                // TABLA WALMART
                 dataFiltrada.map((cp, idx) => (
                   <div
                     key={idx}
@@ -249,17 +211,20 @@ export default function Home() {
                   </div>
                 ))
               ) : (
-                // TABLA PARTICULARES
+                // TABLA PARTICULARES CON TOP 5
                 dataFiltrada.map((item, idx) => (
                   <div
                     key={idx}
-                    style={{ padding: '20px 28px', borderBottom: '1px solid #F3F4F6', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA' }}
+                    onClick={() => setSelectedCp(item)}
+                    style={{ padding: '20px 28px', borderBottom: '1px solid #F3F4F6', cursor: 'pointer', backgroundColor: selectedCp?.codigo_postal === item.codigo_postal ? '#FAFBFF' : '#FFFFFF', transition: 'background-color 0.15s ease' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F9FAFB'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = selectedCp?.codigo_postal === item.codigo_postal ? '#FAFBFF' : '#FFFFFF'; }}
                   >
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '24px', marginBottom: '20px', alignItems: 'start' }}>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Producto</p>
-                        <p style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: '700', color: '#111827' }}>{item.descripcion}</p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{item.codigo} · {item.municipio}, {item.estado}</p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Código postal</p>
+                        <p style={{ margin: '0 0 2px 0', fontSize: '22px', fontWeight: '700', color: '#111827', letterSpacing: '-0.5px' }}>{item.codigo_postal}</p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{item.municipio} · {item.estado}</p>
                       </div>
                       <div>
                         <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Ventas</p>
@@ -270,15 +235,32 @@ export default function Home() {
                         <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#3B82F6', letterSpacing: '-0.5px' }}>{parseInt(item.unidades).toLocaleString('es-MX')}</p>
                       </div>
                       <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>CP</p>
-                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#F59E0B', letterSpacing: '-0.5px' }}>{item.codigo_postal}</p>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Registros</p>
+                        <p style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#F59E0B', letterSpacing: '-0.5px' }}>{item.registros}</p>
                       </div>
                     </div>
+
+                    {item.top_productos && item.top_productos.length > 0 && (
+                      <div style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px' }}>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#9CA3AF', fontWeight: '600', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Top 5 productos</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+                          {item.top_productos.map((prod, i) => (
+                            <div key={i} style={{ backgroundColor: prod.ranking === 1 ? '#FAFBFF' : '#FAFAFA', padding: '14px', borderRadius: '8px', border: prod.ranking === 1 ? '1px solid #DBEAFE' : '1px solid #F3F4F6' }}>
+                              <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: '700', color: prod.ranking === 1 ? '#3B82F6' : '#D1D5DB', letterSpacing: '0.5px' }}>#{prod.ranking}</p>
+                              <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '600', color: '#374151', lineHeight: '1.4' }}>
+                                {prod.item_desc && prod.item_desc.length > 28 ? prod.item_desc.substring(0, 28) + '…' : prod.item_desc}
+                              </p>
+                              <p style={{ margin: '0 0 2px 0', fontSize: '11px', color: '#9CA3AF' }}>{prod.cantidad} unidades</p>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#059669', fontWeight: '700' }}>{fmt(parseFloat(prod.ventas))}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
-
           </div>
         )}
       </div>
