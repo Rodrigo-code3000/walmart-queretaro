@@ -52,15 +52,15 @@ export default function MapComponent({ data, selectedCp, capa }) {
 
       const ventas = getVentas(item);
 
-      // COLORES POR RANGOS APROBADOS
       let color;
       let intensity;
 
       if (capa === 'walmart') {
-        if (ventas >= 100000) {
+        // Rangos ajustados con datos reales (1 semana)
+        if (ventas >= 20000) {
           color = '#27ae60'; // Verde
           intensity = 1;
-        } else if (ventas >= 10000) {
+        } else if (ventas >= 5000) {
           color = '#f39c12'; // Naranja
           intensity = 0.6;
         } else {
@@ -166,15 +166,15 @@ export default function MapComponent({ data, selectedCp, capa }) {
         .addTo(mapInstance.current);
     });
 
-    // LEYENDA DE PARÁMETROS
+    // LEYENDA
     const leyenda = L.control({ position: 'bottomright' });
     leyenda.onAdd = () => {
       const div = L.DomUtil.create('div');
       const rangos = capa === 'walmart'
         ? [
-            { color: '#27ae60', label: 'Más de $100,000' },
-            { color: '#f39c12', label: '$10,000 — $100,000' },
-            { color: '#e74c3c', label: 'Menos de $10,000' },
+            { color: '#27ae60', label: 'Más de $20,000' },
+            { color: '#f39c12', label: '$5,000 — $20,000' },
+            { color: '#e74c3c', label: 'Menos de $5,000' },
           ]
         : [
             { color: '#27ae60', label: 'Más de $30,000' },
@@ -183,27 +183,13 @@ export default function MapComponent({ data, selectedCp, capa }) {
           ];
 
       div.innerHTML = `
-        <div style="
-          background: white;
-          padding: 14px 16px;
-          border-radius: 10px;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-          font-family: 'Inter', -apple-system, sans-serif;
-          min-width: 180px;
-          border: 1px solid #E5E7EB;
-        ">
+        <div style="background:white; padding:14px 16px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.12); font-family:'Inter',-apple-system,sans-serif; min-width:180px; border:1px solid #E5E7EB;">
           <div style="font-weight:700; color:#111827; margin-bottom:10px; font-size:11px; text-transform:uppercase; letter-spacing:0.6px;">
             Ventas por CP
           </div>
           ${rangos.map(r => `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <div style="
-                width:14px; height:14px;
-                border-radius:50%;
-                background:${r.color};
-                flex-shrink:0;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-              "></div>
+              <div style="width:14px; height:14px; border-radius:50%; background:${r.color}; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
               <span style="color:#374151; font-size:12px;">${r.label}</span>
             </div>
           `).join('')}

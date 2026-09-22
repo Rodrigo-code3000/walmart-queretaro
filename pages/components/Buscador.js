@@ -6,7 +6,6 @@ export default function Buscador({ onFiltro, capa }) {
   const [estadoSeleccionado, setEstadoSeleccionado] = useState('');
   const [cpSeleccionado, setCpSeleccionado] = useState('');
 
-  // Recargar filtros cuando cambia la capa
   useEffect(() => {
     setEstadoSeleccionado('');
     setCpSeleccionado('');
@@ -18,17 +17,15 @@ export default function Buscador({ onFiltro, capa }) {
       .then(result => {
         setEstados(result.estados || []);
         setCpsPorEstado(result.cps_por_estado || []);
-        if (result.estados.length > 0) {
-          setEstadoSeleccionado(result.estados[0].estado);
-          onFiltro({ estado: result.estados[0].estado, cp: '' });
-        }
+        // Iniciar con "Todos los estados"
+        onFiltro({ estado: '', cp: '' });
       })
       .catch(err => console.error(err));
   }, [capa]);
 
-  const cpsDelEstado = cpsPorEstado
-    .filter(d => d.estado === estadoSeleccionado)
-    .map(d => d.codigo_postal);
+  const cpsDelEstado = estadoSeleccionado
+    ? cpsPorEstado.filter(d => d.estado === estadoSeleccionado).map(d => d.codigo_postal)
+    : [];
 
   const handleEstadoChange = (e) => {
     const estado = e.target.value;
@@ -54,6 +51,10 @@ export default function Buscador({ onFiltro, capa }) {
           onChange={handleEstadoChange}
           style={{ width: '100%', padding: '8px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.08)', color: '#FFFFFF', marginTop: '4px' }}
         >
+          {/* OPCIÓN VER TODO */}
+          <option value="" style={{ backgroundColor: '#1a2634', color: '#FFFFFF' }}>
+            Todos los estados
+          </option>
           {estados.map(e => (
             <option key={e.estado} value={e.estado} style={{ backgroundColor: '#1a2634', color: '#FFFFFF' }}>
               {e.estado}
@@ -69,9 +70,12 @@ export default function Buscador({ onFiltro, capa }) {
         <select
           value={cpSeleccionado}
           onChange={handleCpChange}
-          style={{ width: '100%', padding: '8px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.08)', color: '#FFFFFF', marginTop: '4px' }}
+          disabled={!estadoSeleccionado}
+          style={{ width: '100%', padding: '8px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '6px', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.08)', color: estadoSeleccionado ? '#FFFFFF' : '#6B7280', marginTop: '4px', cursor: estadoSeleccionado ? 'pointer' : 'not-allowed' }}
         >
-          <option value="" style={{ backgroundColor: '#1a2634' }}>Todos en {estadoSeleccionado}</option>
+          <option value="" style={{ backgroundColor: '#1a2634' }}>
+            {estadoSeleccionado ? `Todos en ${estadoSeleccionado}` : 'Selecciona un estado'}
+          </option>
           {cpsDelEstado.map(cp => (
             <option key={cp} value={cp} style={{ backgroundColor: '#1a2634' }}>
               {cp}
