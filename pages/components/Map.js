@@ -56,11 +56,11 @@ export default function MapComponent({ data, selectedCp, capa }) {
       let intensity;
 
       if (capa === 'walmart') {
-        // Rangos ajustados con datos reales (1 semana)
-        if (ventas >= 20000) {
+        // ✅ RANGOS BALANCEADOS (14 verdes, 71 naranjas, 18 rojos)
+        if (ventas >= 15000) {
           color = '#27ae60'; // Verde
           intensity = 1;
-        } else if (ventas >= 5000) {
+        } else if (ventas >= 3000) {
           color = '#f39c12'; // Naranja
           intensity = 0.6;
         } else {
@@ -172,9 +172,9 @@ export default function MapComponent({ data, selectedCp, capa }) {
       const div = L.DomUtil.create('div');
       const rangos = capa === 'walmart'
         ? [
-            { color: '#27ae60', label: 'Más de $20,000' },
-            { color: '#f39c12', label: '$5,000 — $20,000' },
-            { color: '#e74c3c', label: 'Menos de $5,000' },
+            { color: '#27ae60', label: 'Más de $15,000' },
+            { color: '#f39c12', label: '$3,000 — $15,000' },
+            { color: '#e74c3c', label: 'Menos de $3,000' },
           ]
         : [
             { color: '#27ae60', label: 'Más de $30,000' },
